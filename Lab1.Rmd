@@ -1,0 +1,77 @@
+---
+title: "Lab 1"
+author: "YOUR NAME HERE"
+output: html_document
+---
+
+#### 1
+
+Run this chunk:
+
+```{r}
+#### This is the first chunk!
+
+2+2
+```
+
+What did the part with the hashtags (#) do?
+
+```
+YOUR ANSWER HERE
+```
+
+#### 2
+
+Calculate 2 cubed.
+
+```{r}
+#### TYPE CODE HERE
+
+```
+
+#### 3
+
+Run this chunk.
+
+```{r}
+a <- 15
+
+a
+```
+
+What got displayed?  What happened in the "Environment" tab in the top right?
+
+```
+YOUR ANSWER HERE
+```
+
+#### 4
+
+Add one to `a`.
+
+```{r}
+#### TYPE CODE HERE
+
+```
+
+#### 5
+
+Find the square root of 529.
+
+
+#### 6
+
+Find the average (`mean`) of the numbers in `b`.
+
+```{r}
+b <- c(7, 128, 34, 1, 40)
+```
+
+
+### Results
+
+Knit your document.  What are the 6 numbers that printed out?  Why did Dr. B choose these numbers?
+
+```
+YOUR ANSWER HERE
+```

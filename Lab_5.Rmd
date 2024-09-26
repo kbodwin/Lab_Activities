@@ -1,0 +1,109 @@
+---
+title: "Lab 5: Cal Poly Basketball revisited"
+author: "Stat 218"
+output: rmdformats::readthedown
+---
+## Setup
+
+```{r, include = FALSE}
+library(tidyverse)
+```
+
+In your **console** (bottom left), NOT your Markdown document, type
+
+```{r, eval = FALSE}
+install.packages("infer")
+```
+
+
+Then create a fresh new R Markdown file.  Add in your `library()` statements, if you are using the tidyverse.  This time, you should also add `library(infer)`.
+
+In this lab we will revisit the Cal Poly Basketball dataset:
+
+```{r, message = FALSE}
+bball = read.table("https://raw.githubusercontent.com/kbodwin/ShinyLabs/master/Datasets/cp_bball.csv", header = TRUE)
+```
+
+We will now answer our questions from Lab 3 using hypothesis testing.
+
+## Is Cal Poly a worse than average team?
+
+An "average" team is defined to be a team that is just as likely to lose as to win a game.  We would like to determine if Cal Poly's team was average or not.  
+
+In Lab 3, we found the following data:
+
+```{r}
+bball %>%
+  count(Team.Result)
+```
+
+Fill in the blanks in the following (you do not need to show work in code):
+
+Under the **null hypothesis**, we expect the **true percentage** of wins to be [_____].
+
+Under the **alternate hypothesis**, we expect the **true percentage** of wins to be [_____].
+
+The **sample proportion** in this data is [_____].
+
+The **standard deviation** of the sample proportion is [______].
+
+How many standard deviations was what we saw from what we expected?  Save this as "t".
+
+What is the sample size?  Save this as "n"
+
+```{r, eval = FALSE}
+t <- ### number of sds
+n <- ## sample size
+```
+
+Then run the code below without changing it:
+
+```{r, eval = FALSE}
+pt(t, df = n)
+```
+
+This is your p-value!
+
+What do you conclude?
+
+
+## Was Cal Poly more likely to win at home than away?
+
+Perhaps Cal Poly performs better in front of a home crowd.  Let's find out.
+
+Perform a permutation test, like you did in the Lab Exercise, to make a conclusion.
+
+
+## Does Cal Poly score more at home than away?
+
+Perhaps Cal Poly scores more in front of a home crowd, regardless of wins and losses.
+
+
+### Hypothesis test using standard deviation
+
+Write down your null and alternate hypotheses.
+
+The observed difference of mean scores is [------]
+
+The standard error of the observed difference of mean scores is [------].
+
+The number of standard errors between what we saw and what we expected was [-----].  Save this number as "t"
+
+The sample size in the larger category (either "home" or "away") was [----].  Save this number as "n".
+
+```{r, eval = FALSE}
+t <- ### number of sds
+n <- ## sample size
+```
+
+Then run the code below without changing it:
+
+```{r, eval = FALSE}
+pt(t, df = n)
+```
+
+What do you conclude?
+
+### Hypothesis testing using permutation
+
+Perform a permutation test, like you did in the Lab Exercise.  How does your p-value compare to the one above?

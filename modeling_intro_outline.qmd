@@ -1,0 +1,152 @@
+---
+title: "Modeling Outline"
+format: html
+embed-resources: true
+---
+
+## Introduction
+
+```{r}
+library(tidyverse)
+
+covid <- read_csv("covid.csv")
+ca <- covid %>% filter(state == "CA")
+```
+
+
+In this chapter, we will get our first taste of **statistical models**.  A statistical model is a description of a trend or pattern that we see in data. To perform statistical modeling in R, we use the `tidymodels` package.
+
+```{r}
+library(tidymodels)
+```
+
+
+Consider the following scatterplot of covid cases and deaths in California:
+
+```{r}
+ca %>%
+  ggplot(aes(x = cases, y = deaths)) + 
+  geom_point()
+```
+
+Each dot on the chart represents one day in our data study.  Some days there were very few cases recorded, and also very few deaths.  Some days there were many cases and many deaths.  Other days, there were many cases and few deaths.
+
+Do we see an overall trend in this data?  Yes, we see that *in general*, days with more cases tend to have more deaths - even though that doesn't hold true for every single day.
+
+We can ask ggplot to use `geom_smooth` to add a line capturing the overall pattern in the data.
+
+```{r}
+ca %>%
+  ggplot(aes(x = cases, y = deaths)) + 
+  geom_point() +
+  geom_smooth()
+```
+
+Our goal is to create a *model* to explain this trend.  We might use the model for **prediction:** if there are 10,000 cases recorded tomorrow, about how many deaths should we expect? Or, we might use this model for **interpretation**: out of every 100 cases, about how many result in death?
+
+## Step One: Recipe for your data
+
+The first step in the modeling process is to decide which *variables* to use.  This is called a **recipe**.
+
+In this example, we are using `cases` to predict `deaths`.  
+
+```{r}
+covid_recipe <- recipe(deaths ~  cases, data = ca)
+```
+
+
+## Step Two: Model setup
+
+Next, we need to decide what type of trend we think exists.  In this case, we'll keep it simple and draw a straight line - that is, we will fit a **linear model**.
+
+We can see this trend on our plot by specifying to `geom_smooth` that we want to see a *linear* trend:
+
+```{r}
+ca %>%
+  ggplot(aes(x = cases, y = deaths)) + 
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+
+To prepare our modeling code, we establish a *model specification*:
+
+```{r}
+lm_spec <- linear_reg()
+```
+
+
+## Step Three: Model fit
+
+Now, the most important step:  We need to figure out exactly what equation (slope and intercept) describes our "best" trend line.
+
+:::{.callout-note}
+There are many ideas of how to define the "best" line to model a trend.  In this analysis, we'll rely on the most common definition, which is called **least-squares**.  R will take care of this with its built in calculations; there's no need for us to get into the math here.
+:::
+
+The process of calculating the exact numbers that describe the trend line, for a particular dataset, is called **model fitting**.  We achieve this by combining our recipe and model spec into one *workflow*, then using that workflow to *fit* the model on our data.
+
+```{r}
+my_workflow <- workflow() %>%
+  add_recipe(covid_recipe) %>%
+  add_model(lm_spec)
+
+
+fitted_model <- my_workflow %>% fit(ca)
+```
+
+
+## Step Four: Model interpretation
+
+So, what did we achieve with that model fit?  We calculated the *coeffiecients* - i.e., the slope and intercept for the trend line.
+
+```{r}
+fitted_model %>% 
+  extract_fit_engine()
+```
+How to interpret these numbers?
+
+The *Intercept* tells you where the line crosses the y-axis; this number is not usually very interpretable.  It tells us that on a day with `0` cases, we expect `72.8` deaths - that makes no real-world sense.
+
+We are more interested in the *slope* of the `cases` variable: This tells us that for every 1 more case in a day, we expect 0.007784 more deaths.
+
+Or, to put it in more human-readable terms:  **For every 1000 cases, we expect around 8 deaths.**
+
+:::{.callout-note}
+For those wanting more statistical information about these coefficients, the `tidy` function will give a full dataset of results:
+
+```{r}
+fitted_model %>% 
+  extract_fit_engine()
+```
+
+:::
+
+## Step Five: Prediction
+
+Lastly, we might want to ask what we should expect to happen on a particular day.
+
+Suppose we see, in the next three days, the following case counts:  `2820, 8740, 9930`.  How many deaths should we expect?
+
+We *could* calculate these predictions by hand using our coefficients:
+
+$$72.815 + 0.007784 * 2820 = 94.766 \text{ deaths}$$
+
+However, that is tedious - we'll put our new data into a tibble and then let R do the predicting for us:
+
+```{r}
+new_data <- tibble(
+  cases = c(2820, 8740, 9930)
+)
+
+fitted_model %>%
+  predict(new_data)
+```
+
+
+
+## Extension: Multiple variables, zero intercept
+
+1. [force intercept to be 0, because it makes sense in this case]
+
+2. [make new categorical variable for before and after vaccine, use `deaths ~ cases:vaccine` as well as a plot to see if the slope is different before/after]

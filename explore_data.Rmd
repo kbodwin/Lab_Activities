@@ -1,0 +1,66 @@
+---
+title: "Untitled"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    css: fd_kb.css
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+#source("teach_me.R")
+titanic <- read.csv('https://raw.githubusercontent.com/kbodwin/ShinyLabs/master/Datasets/titanic.csv')
+```
+
+# Discuss and Summarize
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Input
+
+```{r}
+textInput('var_name', 
+          "What variable would you like to arrange by?")
+```
+
+
+```{r}
+p1_source <- reactive(paste0("titanic %>% arrange(", input$var_name, ")"))
+
+output$p1_code <- renderText(p1_source())
+```
+
+```{r}
+textOutput("p1_code")
+
+```
+
+
+Column {data-width=500, data-height=100}
+-----------------------------------------------------------------------
+
+### Code Run
+
+```{r}
+actionButton("button", "Run this code")
+
+```
+
+
+### Output
+
+```{r}
+observeEvent('button',
+              output$p1_output <- renderTable(eval(parse(text = p1_source()))))
+```
+
+
+```{r}
+tableOutput('p1_output')
+```
+
+# Something Else

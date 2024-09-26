@@ -1,0 +1,60 @@
+---
+title: "Lab 7: Baby Names"
+author: "Stat 218"
+output: rmdformats::readthedown
+---
+## Partners
+
+You **may** work in teams of two for this lab, if you wish.  Simply turn in the same .html file for both members of the team.
+
+**Be sure to put both author's names on the document, so I know you worked together.**
+
+## Setup
+
+### 1.  
+
+Choose a name (or several) that you wish to study.
+
+### 2.  
+
+Navigate to the data:
+
+https://www.dropbox.com/sh/czm61yzmvzl6xfb/AABEFdpy02aNRhZ_vcxrVAQSa?dl=0 .
+
+### 3.  
+
+Download to you computer the dataset(s) you need for the name(s) you are studying.  **Make sure you save these datasets in your Stat 218 folder!!!**
+
+### 4.  
+
+Create a new R Markdown file; add up your `library(tidyverse)` statement.
+
+### 5.  
+
+Read your dataset(s) into your file as follows:
+
+```{r, eval = FALSE}
+k_names <- read.csv("StateNames_K.csv")
+```
+
+If this step does not work:
+
+* Make sure your data file (the `.csv` one) is in your Stat 218 folder.
+
+* Make sure the name of the data file is "StateNames_K.csv"
+
+* Double check the letter - in my example, it is `K`, but you may have picked different letters!
+
+
+### 6. 
+
+If you are studying many names, and you wish to combine the datasets into one big dataset, use the following code (possibly changing `k_names` and `b_names` to match your own datasets:
+
+```{r, eval = FALSE}
+all_names <-
+  k_names %>% bind_rows(b_names)
+```
+
+##  Research Question
+
+Use either an ANOVA analysis or a Linear Regression analysis to reach a conclusion about your chosen name(s), as in the Lab Exercises.

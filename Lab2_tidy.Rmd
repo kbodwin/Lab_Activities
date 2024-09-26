@@ -1,0 +1,282 @@
+---
+title: "Lab 2: Exploring and describing data"
+author: "Stat 218"
+output: rmdformats::readthedown
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)  #ignore this
+```
+
+## Making your own R Markdown document
+
+Carefully follow these steps to create Lab 2.
+
+1. Open up your Stat 218 **R Project**.
+
+2. Choose `File > New File > R Markdown`.
+
+3. Enter "Lab_2" as the title and your name as the author.  Do not change the default format (HTML). Click "OK".
+
+4. You should now have new file called "Lab_2.Rmd".  Knit this file.
+
+5. This R markdown file has some example text and code in it already.  The first thing you should see, after the title and author section, is a code chunk that looks like this:
+
+````
+```{r setup, include=FALSE}`r
+knitr::opts_chunk$set(echo = TRUE)
+```
+````
+
+Don't touch this chunk! You can ignore it for now.  Delete everything after the chunk.
+
+6. Follow the instructions below to complete your lab.  Make sure that every time you see something labelled "QUESTION", you answer this question in your lab!
+
+## Packages
+
+A blessing (and curse!) of R is that anyone can write extra code "packages", which allow you to do more things with R. If there is a task you want to accomplish, and it doesn't seem to be possible, chances are there is a package you can use.
+
+To use a new packages, you must first *install* it.  This only needs to happen once per computer.  
+
+Type/copy the following **into your console**.  DO NOT PUT THIS IN A CODE CHUNK!!!
+
+```{r, eval = FALSE}
+install.packages("tidyverse")
+```
+
+Now your computer knows how to do the "extra" stuff from the package called "tidyverse".  If you want to use it in a particular analysis, you need to start by delaring to R that you will use the package.
+
+Create a code chunk in your R Markdown file by choosing `Insert > R` at the top right of your R Markdown file.  Then add this line:
+
+```{r}
+library(tidyverse)
+```
+
+*Hint: Pay attention to the quotation marks in the `install` code, but no quotations in the `library` one*
+
+
+## Piping
+
+Writing clear data analysis code relies on a special symbol called "the pipe", which looks like this `%>%`.  The pipe is usually read as "do this" or "then".
+
+For example,
+
+```
+Dr. B. %>% dance()
+```
+
+should make me do a dance.
+
+Think of this like a sentence - we are taking an object/noun (Dr. B) and then deciding what verb to do (dance).
+
+You can chain pipes together to form a sequence of tasks:
+
+```
+Dr. B. %>% 
+  turn_around() %>%
+  dance()
+```
+
+
+## Our Dataset
+
+Today we'll be looking at a dataset of passengers on the H.M.S. Titanic.
+
+![Not these ones][1]
+
+
+First, create a section header by typing `## Load the data`.
+
+
+The following **R** code will load a dataset into your RStudio and name it `titanic`.  (You don't have to know how to do this, for now.) Copy this code into your code chunk.
+
+```{r}
+# Load dataset
+titanic <- read_csv("https://www.dropbox.com/s/4fh9pb7kxc1npo4/titanic.csv?dl=1")
+```
+
+
+Recall that there are many ways to tell R to run the code in the chunk.
+
+* Click the green arrow that appears next to the "code chunk"
+* At the top of the source window, click "Run" -> "Run current chunk"
+* Highlight the code you want to run and press "Command + Enter" (Mac) or "Control + Enter" (PC)
+* Cut and copy the code into the *Console* window and run it
+
+
+Using whatever method you prefer, run the code.  You should see something called `titanic` appear in your *Environment* in the top right corner.  Click on this to take a look at your new dataset.
+
+
+## Examining a dataset
+
+Our goal is to use R for everything we need to do, instead of needing to look at datasets by hand.  Instead of clicking on the *Environment*, we can see that some information about the dataset gets outputted when you loaded it.
+
+### QUESTION 1a)
+
+Look at the dataset and this output from loading it. Describe the dataset using vocabulary from the course so far.  What are the cases/units?  What are the variables?  What kind of variables are they?
+
+  
+### QUESTION 1b)
+
+We can also examine the dataset using R functions `head()`, `str()`, and `summary()`.  `str()` and `summary( )` will tell you about the variables in the dataset and their values while `head( )` will simply show you the first 6 rows of the dataset.
+
+```{r}
+
+# Look at dataset
+titanic %>% head()
+titanic %>% str()
+titanic %>% summary()
+
+
+```
+
+<span style="color:red"> Alert!  Capitalization matters in R.  Your program may suggest another dataset called `Titanic` - we don't want this!  Be sure to use only `titanic`, which is the name we gave to our dataset in this lab. </span>
+
+
+If `head( )` shows the first 6 rows of the dataset, what command do you think might show the *last* 6 rows?  Try some ideas, and consult Google and/or your classmates, until you find the right command.
+
+
+***
+
+## Looking at details
+
+
+Sometimes, we will want to look at individual entries, rows, or columns of our data. In R, we can do this the right "verbs" for our dataset.  Try the following examples **in your console** to see what happens.
+
+```{r}
+
+# Look at a single row
+titanic %>%
+  slice(124)
+
+# Look at a single column (well, the first 6 entries of it...)
+titanic %>%
+  select(3) %>%
+  head()
+
+titanic %>%
+  select(Name) %>%
+  head()
+
+titanic %>%
+  pull(Name)
+
+# Look at a single entry
+titanic %>%
+  select(Name) %>%
+  slice(124)
+
+```
+
+### QUESTION 2a)
+
+Is there any difference between `select()` and `pull()`?  
+
+### QUESTION 2b)
+
+Look at row 118.  In plain English, tell me what you know about this passenger from the data.
+
+***
+## Adjusting variables
+
+Before we begin, we want to do a little bit of variable management.  Take a look at the variable `Pclass`, which shows the travel class of each passenger.  
+
+### QUESTION 3a)
+
+What type of variable should this be, categorical or quantitative?  
+
+
+### QUESTION 3b)
+
+What type of variable does **R** think `PClass` is?  
+
+
+### QUESTION 3c)
+
+We would like to change `Pclass` to be a categorical variable, or a *factor*. 
+
+Make a code chunk and copy the following code:
+
+```{r}
+titanic <- titanic %>%
+  mutate(
+    Passenger.Class = factor(Pclass, 
+                             labels = c("First", "Second", "Third")
+                            )
+  )
+```
+
+Explore the dataset again.  What did this code do?
+
+***
+
+## Basic plots
+
+We will now begin to explore the data through visualization. 
+
+We'll start by making a barplot of the travel class of each passenger, which is stored in the new variable `Passenger.Class`.  
+
+
+The way this works in the special `ggplot` function in the `tidyverse` is as follows:
+
+* First, we determine which dataset to use, and which variables we care about.  The variable we want to show is part of the "aesthetic" of the plot, or `aes()`
+```
+ggplot(titanic, aes(x = Passenger.Class))
+```
+* Next, we decide which type of plot we are going to use.  Since `Pclass` is a categorical variable, we'll want to make a bar plot.  Therefore, we add `+ geom_bar()` to our line of code.
+```
+ggplot(titanic, aes(x = Passenger.Class)) + 
+  geom_bar()
+```
+
+* Finally, we can change the color of the bars, and add a title and axis labels. Run the code below and see what happens.
+
+
+```{r}
+# Make a bar plot of classes
+ggplot(titanic, aes(x = Passenger.Class)) + 
+  geom_bar(fill = "black") + 
+  ggtitle("I am a title") + 
+  xlab("I am an axis label") 
+```
+
+
+
+### QUESTION 4
+
+Change the above code to make a barplot showing how many men and women were aboard. Also edit the colors and labels to be nicer!
+
+## Extra Credit
+
+Try to answer the following questions, using code, for extra credit.  You will probably have to use Google and/or discuss with friends to figure this out.
+
+For credit, you **must** show how you used code, not looking at the dataset directly, to answer these questions.
+
+1. Who was the youngest person on the Titanic, and how old was he/she?
+
+2. There was someone on the boat named "Miss. Sara Rebecca Compton".  How much did she pay for her ticket?
+
+3. How many men survived?  How many women survived?
+
+
+***
+
+Knit your R Markdown file, and turn it in to the "Lab Exercise" assignment.  Full credit will be given for any reasonable attempt to answer all questions.
+
+***
+
+
+## YOUR TURN - THIS SECTION WILL BE GRADED
+
+Now it is your turn to be a statistician!  
+
+One of the most interesting pieces of information in this dataset is the variable `Survived`, telling us which passengers survived the sinking (1) and which did not (0).
+
+Create a fresh new R Markdown document, following your same steps as before.  Write me a short report (one or two paragraphs and one or two plots) that tells me something interesting about which passengers survived.  You can use any other variables you would like.  Try to use as much vocabulary as you can, and make sure your plots all have appropriate titles and labels.
+
+Note that your very first step should be to turn `Survived` into a categorical variable (factor), just like we did for `Pclass`.
+
+Remember to include all the elements of **R.E.C.A.P.!** But do not give me a list of answers you think I am looking for.  Instead, your discussion should read naturally.  Think about writing something you could hand to your friend who is not in Stats 218, to show them something interesting about the Titanic data.
+
+
+[1]: http://s1.dmcdn.net/MFFmZ/1280x720-TU3.jpg

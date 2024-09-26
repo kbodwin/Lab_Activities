@@ -1,0 +1,266 @@
+---
+title: "Lab Exercise: ANOVA"
+output: learnr::tutorial
+tutorial:
+  id: "Lab_ANOVA"
+  version: 2.0
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+
+if(file.exists("ANOVA-B.html")){
+  file.remove("ANOVA-B.html")
+}
+
+require(learnr)
+require(ggplot2)
+require(dplyr)
+require(shiny)
+require(tidyr)
+require(httpuv)
+require(tibble)
+require(fmsb)
+
+knitr::opts_chunk$set(echo = FALSE)
+
+tags$style(type="text/css",
+         ".shiny-output-error { visibility: hidden; }",
+         ".shiny-output-error:before { visibility: hidden; }"
+)
+
+
+source("https://raw.githubusercontent.com/kbodwin/ShinyLabs/master/Scripts/makeStrings.R")
+
+correct <- "<font color='red'>Correct!</font><br><br>"
+incorrect <- "<font color='red'>Not quite right...</font><br><br>"
+congrats <- "<font color='red'>You did it!</font><br><br>"
+
+babies = read.csv('https://www.dropbox.com/s/zwn409iska1qgo2/fournames.csv?dl=1')
+
+### %ni = new input (red), %oi = old input (blue)
+```
+
+## Baby Names in the U.S.
+
+The loaded dataset, `babies`, has information about babies born in California from 1940-2016.  For each year, we are given the counts of how many babies had that name.  In this dataset, we include only only babies assigned as female at birth, and only four particular baby names:  "Samantha", "Charlotte", "Miranda", and "Carrie".
+
+Take a look at the dataset, and familiarize yourself with the variables.
+
+```{r ex_1a, exercise = TRUE}
+```
+
+## Whose name is most common?
+
+Over time, names come and go out of style.  We would like to know which of our four chosen names has been, on average, most popular over the past few decades.
+
+**Think about it:** Why is it perhaps unreasonable to treat each year as an independent sample?  For example, does knowing the counts in 1991 give you any extra information about 1992?
+
+Use the code box below to make side-by-side boxplots comparing the name counts for the four names in the "babies" dataset. (Hint: See the Quantitative Variables lab exercise.)
+
+```{r boxplots, exercise = TRUE}
+
+```
+
+## ANOVA
+
+To test whether or not the four mean counts are equal, we will use an **Analysis of Variance** test.
+
+
+```{r, echo=FALSE}
+textInput("plot_var_6_1", 
+          "What QUANTITATIVE variable would you like to compare the means of?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_var_6_2", 
+          "What CATEGORICAL variable separates the groups?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+# 
+htmlOutput("code_6")
+# 
+verbatimTextOutput("plot_6")
+```
+
+
+```{r, context="server"}
+
+bs_6 <- reactive("%oi(lm(%ni ~ %ni, data = %oi))")
+
+output$plot_6 <- renderPrint({
+ eval(parse(text = 
+    makeEvalText(
+      base_string = bs_6(), 
+      old_input = c("anova", "babies"),
+      new_input = c(input$plot_var_6_1, input$plot_var_6_2)
+    )
+   ))
+})
+
+output$code_6 <- renderText(
+        makePrintText( 
+      base_string = bs_6(), 
+      old_input = c("anova", "babies"),
+      new_input = c(input$plot_var_6_1, input$plot_var_6_2)
+    )
+  )
+
+```
+
+
+```{r q_7}
+textInput("a_7",
+           "What was test statistic for the ANOVA test?",
+           value = "0",
+           width = '80%', placeholder = NULL)
+
+htmlOutput("check_7")
+
+```
+
+```{r, context = "server"}
+
+output$check_7 <- renderText(
+  if(round(as.numeric(input$a_7), 2) == 53.56){
+      correct
+  }else{
+    incorrect
+  }
+)
+```
+
+```{r q_8}
+textInput("a_8",
+           "What was p-value of this test?",
+           value = "1",
+           width = '80%', placeholder = NULL)
+
+htmlOutput("check_8")
+
+```
+
+```{r, context = "server"}
+
+output$check_8 <- renderText(
+  if(round(as.numeric(input$a_8), 2) == 0){
+      correct
+  }else{
+    incorrect
+  }
+)
+```
+
+```{r q_9}
+radioButtons("a_9",
+           "At the 0.05 level, we conclude that",
+           choices = c(
+             "There is no difference in the mean counts of the four names." = "no1",
+              "All four names have different mean counts." = "no2",
+             "At least one name has a different mean count." = "yes")
+)
+
+htmlOutput("check_9")
+
+
+```
+
+```{r, context = "server"}
+
+output$check_9 <- renderText(
+  if(input$a_9 == ""){
+     ""
+  }else if(input$a_9 == "yes"){
+      correct
+  }else{
+    incorrect
+  }
+)
+```
+
+## Tukey's Honest Significant Difference
+
+It is not enough to know that there is *some* difference in the name counts.  We would like to know exactly which are significantly more popular thatn the others.  Use the code below to run t-tests for **each pair** of names.
+
+Using the Tukey HSD function, instead of simply running many different tests, makes sure we adjust the p-values to correct for **multiple testing**.
+
+
+```{r, echo=FALSE}
+textInput("plot_var_8_1", 
+          "What QUANTITATIVE variable would you like to compare the means of?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_var_8_2", 
+          "What CATEGORICAL variable separates the groups?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+
+# 
+htmlOutput("code_8")
+# 
+verbatimTextOutput("plot_8")
+```
+
+
+```{r, context="server"}
+bs_8 <- reactive("%oi(%oi(lm(%ni ~ %ni, data = %oi)))")
+
+output$plot_8 <- renderPrint({
+ eval(parse(text = 
+    makeEvalText(
+      base_string = bs_8(), 
+      old_input = c("TukeyHSD", "aov", "babies"),
+      new_input = c(input$plot_var_8_1, input$plot_var_8_2)
+    )
+   ))
+})
+
+output$code_8 <- renderText(
+        makePrintText( 
+      base_string = bs_8(), 
+      old_input = c("TukeyHSD", "aov", "babies"),
+      new_input = c(input$plot_var_8_1, input$plot_var_8_2)
+    )
+  )
+
+```
+
+
+
+```{r q_10}
+radioButtons("a_10",
+           "What is your final conclusion?",
+           choices = c(
+             "There is no difference in the mean counts of the four names." = "no1",
+              "All four names have different mean counts." = "no2",
+             "Samantha is the most common name; the rest are all equal." = "yes",
+             "Miranda and Carrie are equally common, and they are less common than Samantha and Charlotte." = "no4",
+             "Samantha and Charlotte are equally common, then Miranda, then Carrie." = "no3",
+             "Carrie is the most common, followed by Charlotte, then Miranda, then Samantha" = "no5"
+             )
+)
+
+htmlOutput("check_10")
+
+
+```
+
+```{r, context = "server"}
+
+output$check_10 <- renderText(
+  if(input$a_10 == ""){
+     ""
+  }else if(input$a_10 == "yes"){
+      correct
+  }else{
+    incorrect
+  }
+)
+```

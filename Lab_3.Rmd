@@ -1,0 +1,59 @@
+---
+title: "Lab 3: Cal Poly Basketball"
+author: "Stat 218"
+output: rmdformats::readthedown
+---
+## Setup
+
+```{r, include = FALSE}
+library(tidyverse)
+```
+
+
+Create a fresh new R Markdown file.  Add in your `library()` statements, if you are using the tidyverse.  Read in your data:
+
+```{r, eval = FALSE}
+bball = read.table("https://raw.githubusercontent.com/kbodwin/ShinyLabs/master/Datasets/cp_bball.csv", header = TRUE)
+```
+
+
+
+
+## The Dataset
+
+This analysis is an exploration of a dataset containing the results of all Cal Poly's basketball games in the 2015-2016 season.  
+
+Describe the dataset briefly using class vocabulary.
+
+## Is Cal Poly a worse than average team?
+
+An "average" team is defined to be a team that is just as likely to lose as to win a game.  We would like to determine if Cal Poly's team was average or not.  Fill in the blanks in the sentences below. Be sure to show any code you use to help you answer these questions. 
+
+In the 2015-16 Season, Cal Poly won [_____] games and lost [______] games.  This means they won [_____]% of their games.
+
+Using the above information, make an argument that Cal Poly is or is not an average team.
+
+
+## Was Cal Poly more likely to win at home than away?
+
+Perhaps Cal Poly performs better in front of a home crowd.  Let's find out.
+
+Cal Poly won [_____]% of its home games and [______]% of its away games.
+
+[Make a conclusion here.]
+
+## Does Cal Poly score more at home than away?
+
+Perhaps Cal Poly scores more in front of a home crowd, regardless of wins and losses.
+
+In Home Games, Cal Poly scored an average of [______] points, with a standard deviation of [______] points.  In Away Games, Cal Poly scored an average of [_____] points, with a standard deviation of [______] points.
+
+[Make a conclusion here about home versus away games.]
+
+## Does Cal Poly truly play better at home?
+
+Consider the following argument:
+
+"Even if Cal Poly didn't score much more at home than away, they still played better.  This is because they played better defense at home, so the scores overall were lower."
+
+Make an argument in favor or against this statement.  Include *more than one* summary statistic in your analysis, and make at least one plot.

@@ -1,0 +1,92 @@
+---
+title: "Lab 4: Video Games"
+author: "Stat 218"
+output: rmdformats::readthedown
+---
+## Setup
+
+```{r, include = FALSE}
+library(tidyverse)
+```
+
+
+Create a fresh new R Markdown file.  Add in your `library()` statements, if you are using the tidyverse.  Read in your data:
+
+```{r}
+vgames <- read_csv("https://www.dropbox.com/s/yaqtky7f6v89unq/video_games.csv?dl=1")
+```
+
+
+
+## The Dataset
+
+This analysis is an exploration of video games published over the past 20(ish) years.
+
+Notes:
+
+* The "Platform" of a video game is the machine that it is designed to be played on.
+* The "Publisher" is the company that created the game
+* "NA_Sales" stands for North America, "EU" is European Union, and "JP" is Japan.
+* Sales are measured in millions of copies sold
+
+Explore the dataset, and describe it briefly using class vocabulary.
+
+## One Categorical Variable: Genre
+
+A group of parents is concerned with the the rise in violent video games.  This group claims that  10% of all video games published in 2020 will be in the genre of "Shooter".  Does the data support this claim?
+
+* **Research Question:**
+
+* **Parameter(s):** 
+    + If yes:
+    + If no:
+    
+* **Summary Statistic Sentence:**
+
+* **Plot:**
+
+* **Test Statistic:**
+
+* **Conclusion:**
+
+```{r}
+vgames %>%
+  count(Genre)
+
+vgames %>%
+  nrow()
+
+1095/14003
+```
+
+
+
+
+## One Quantitative Variable:  Nintendo Sales
+
+*Nintendo* is a major video game publisher.  One expert suggests that Nintendo might average over 3 million sales per game over the next 20 years.  Does the data support this prediction?
+
+## Two Categorical Variables: Genre and Publisher
+
+Consider the game publishers "Nintendo" and "Electronic Arts (EA)".  Many people consider EA to be a company known for its sports games. Does the data support this characterization?
+
+Hint: Reduce your datset to only Nintendo and EA.  Then create a new variable called `is_sports` that has variables `TRUE` or `FALSE`.  Then count up your variables.  Here is some code to help you out:
+
+```{r}
+vgames %>%
+  filter(Publisher %in% c("Nintendo", "Electronic Arts")) %>%
+  mutate(
+    is_sports = (Genre == "Sports")
+  )
+```
+
+
+## One Categorical and One Quantitative:  Sales in Europe and North America
+
+Does North America tend to buy more video games than Europe?  Make a case based on the data.
+
+## Bonus:  Two Quantitative Variables:  Games over time
+
+**THIS SECTION IS EXTRA CREDIT**
+
+Have the Global sales of video games increased over time?  Make visualization, and use it to argue for your answer.

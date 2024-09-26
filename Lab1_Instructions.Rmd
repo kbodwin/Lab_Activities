@@ -1,0 +1,97 @@
+---
+title: "Lab 1 Instructions"
+output: 
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+## Introduction
+
+Today, we will be learning to work with **R**, **RStudio**, and **R Markdown**.
+
+Follow [these instructions](https://moderndive.com/1-getting-started.html#r-rstudio) to download **R** and **RStudio**, if you have not already.
+
+## Welcome to RStudio
+
+Double click the appropriate icon (see instructions) to open RStudio.
+
+Work with a neighbor or two to answer the following questions:
+
+*(these will not be collected; simply work through this exercise together)*
+
+1. In the main panel on the left, next to the `>` symbol, type `2+2` and hit enter.  What happens?
+
+2. With your cursor still next to the `>` symbol, hit the "up" arrow key.  What happens?
+
+3. In the top right panel, click the "History" tab.  What do you see?
+
+4. In the bottom right panel, click the "Files" tab.  What do you see?
+
+5. Open a new file by choosing `File > New File > New Script`.  You should now have a blank fourth panel in the top left.
+
+6. Type `2+2` in this blank document.  What happens?
+
+7. Select the `2+2` you just typed, and then push `Control + Enter` (PC) or `Command + Enter` (Mac).  What happened?
+
+8. Run this line of code, however you prefer:  `plot(1:10)`.  What happened?
+
+9. Run this line of code, however you prefer:  `?mean`.  What happened?
+
+10. Push `Ctrl/Cmd + Shift + 1`.  What happened?  (Push it again to go back to normal!)
+
+
+## Folders and Projects
+
+To get today's class materials, run the following lines of code (copy-paste is fine!)
+
+```{r, eval = FALSE}
+install.packages("usethis")
+usethis::use_course("kbodwin/Stat-218-Student")
+```
+
+If all went according to plan, a new RStudio window will have opened up for you.  
+
+1. Look in the top right of this window - how is it different from your first RStudio window?
+
+2. Look on your computer's desktop.  What do you see?
+
+
+I have just forcibly created a folder on your desktop.  I strongly suggest you use this folder throughout the course, so that your information is organized in the same way as everyon else.
+
+I have also put two things in this folder:
+
+* An **R Project** marker, which looks like a little cube.
+
+* A "Lab 1" folder, with our very first Lab file.
+
+Close ALL of your RStudio windows.  Open your Stat 218 folder.  Double click the **R Project** marker.
+
+Notice that RStudio opened up for you!  Click the "Files" tab in the bottom right panel.  Your "home directory" or "working directory" is now in the folder where the project cube lived.  This will make it easy to open your files (and later, your data!) in R.
+
+## Welcome to R Markdown
+
+In your "Files" tab, open your "Lab 1" folder.  You will se one file, called "Lab1.Rmd".
+This is an **R Markdown** document, which always has the file extension ".Rmd".
+
+Double click this document to open it up, then do the following:
+
+1. At the top of the page, replace "YOUR NAME HERE" with your own name.  (Leave the quotation marks.)
+
+2. Save the file.
+
+3. At the top of your upper left panel, find a button that says "Knit".  Click it.
+
+4. What file got added to your "Lab 1" folder?
+
+5. Go back to your *source file*, that is, the `.Rmd` file you have open in RStudio.  Find the first **code chunk**.  Click the green "play" button on the right.  What happens?
+
+As you (hopefully) have seen, **R Markdown** is a convenient way to combine plain text (like you might type into Microsoft Word) with code and code output.  All your lab assignments will be done in **R Markdown**.
+
+Tips:
+
+* You should regularly **save** your **source file**.  (`Ctrl/Cmd + S`, `File > Save`, or the "Save" button.)  This is just like saving any other document - your source text is stored.
+
+* You should occasionally **knit** your **Markdown document**, to make sure everything is displaying how you want.
+
+* When you finish your assignment and are ready to turn it in, **make sure you have knitted it!!!** Otherwise, your changes will not show up!

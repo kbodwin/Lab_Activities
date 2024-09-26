@@ -1,0 +1,299 @@
+---
+title: "t-tests"
+output: learnr::tutorial
+tutorial:
+  id: "Lab_ttests"
+  version: 2.0
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+
+if(file.exists("t_Tests-T.html")){
+  file.remove("t_Tests-T.html")
+}
+
+require(learnr)
+require(ggplot2)
+require(dplyr)
+require(shiny)
+require(tidyr)
+require(httpuv)
+require(infer)
+
+knitr::opts_chunk$set(echo = FALSE)
+
+
+source("https://raw.githubusercontent.com/kbodwin/ShinyLabs/master/Scripts/makeStrings.R")
+
+correct <- "<font color='red'>Correct!</font><br><br>"
+incorrect <- "<font color='red'>Not quite right...</font><br><br>"
+congrats <- "<font color='red'>You did it!</font><br><br>"
+
+titanic = read.csv('https://raw.githubusercontent.com/kbodwin/ShinyLabs/master/Datasets/titanic.csv')
+
+titanic <- titanic %>% mutate(
+  Survived = factor(Survived)
+)
+
+titanic_full <- titanic %>% mutate(
+   Family.Aboard = Siblings.Spouses.Aboard + Parents.Children.Aboard,
+   Passenger.Class = factor(Pclass, 
+                           levels = c(1,2,3), 
+                           labels = c("First", "Second", "Third"))
+)
+
+### %ni = new input (red), %oi = old input (blue)
+```
+
+
+## Setup
+
+### Checking out the data
+
+As a reminder, here is some information about the `titanic` dataset:
+
+```{r}
+titanic %>% head()
+titanic %>% summary()
+```
+
+### The `infer` package
+
+For this lab, we will again be using the `infer` package. 
+
+```{r}
+library(infer)
+```
+
+This package allows us to carry out one-by-one the steps of a hypothesis test.
+
+### Theoretical p-values
+
+The final step of a hypothesis test is to check statistical significance.  To do so, we ask ourselves,
+
+> If the null hypothesis were true, how likely would we be to find evidence as strong as this data, simply by luck?
+
+Recall that we previously calculated these p-values by *permutation*.  We shuffled the data to be random, and then compared the results in the random situation to the results we truly observed.
+
+Now, though, we have the magic of the Central Limit Theorem.  This tells us that when we are working with **sample means**, we can assume a Normal distribution!  Thus, we can can calculate p-values by looking at the appropriate areas under a bell curve.
+
+## Set up Hypotheses
+
+As before, we first need to specify our hypotheses.  This time, we will ask questions about a **quantitative** variable.
+
+Consider the question, *Were survivors on the Titanic on average younger than those who died?*
+
+```{r}
+textInput("var_e", 
+          "What is the explanatory variable?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("var_r", 
+          "What is the response variable?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+```
+
+
+
+```{r, context="server"}
+
+output$code_2 <- renderText(
+        makePrintText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni) %>% \n %oi(null = %ni)",
+          old_input = c("hypothesize"),
+          new_input = c(input$var_e, input$var_r, "independence")
+        )
+  )
+
+output$result_2 <- renderDataTable(
+  eval(parse(text = 
+        makeEvalText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni) %>% \n hypothesize(null = 'independence')",
+          old_input = c("hypothesize"),
+          new_input = c(input$var_e, input$var_r)
+        )
+  ))
+  )
+
+
+```
+
+
+Code:
+
+```{r}
+htmlOutput("code_2")
+```
+
+Output:
+
+```{r}
+dataTableOutput("result_2")
+
+```
+
+
+## Calculating the test statistic
+
+We now calculate the observed test statistic:
+
+$$t = \frac{\bar{x}_1 - \bar{x}_2}{SE_{\bar{x}_1 - \bar{x}_2}}$$
+
+```{r}
+textInput("val_1", 
+          "What value of the explanatory variable represents the first category?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("val_2", 
+          "What value of the explanatory variable represents the second category?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+```
+
+```{r, context="server"}
+
+output$code_4 <- renderText(
+        makePrintText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni) %>% \n %oi(stat = '%ni', order = c('%ni', '%ni'))",
+          old_input = c("calculate"),
+          new_input = c(input$var_e, input$var_r, "t", input$val_1, input$val_2)
+        )
+  )
+
+output$result_4 <- renderDataTable(
+  eval(parse(text = 
+        makeEvalText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni) %>% \n %oi(stat = '%ni', order = c('%ni', '%ni'))",
+          old_input = c("calculate"),
+          new_input = c(input$var_e, input$var_r, "t", input$val_1, input$val_2)
+        )
+  ))
+  )
+
+
+```
+
+
+Code:
+
+```{r}
+htmlOutput("code_4")
+```
+
+Output:
+
+```{r}
+dataTableOutput("result_4")
+
+```
+
+
+**Check your knowledge!** Approximately what p-value do you think will come from this *t* statistic?
+
+
+## Finding the p-value
+
+We would now can calculate and visualize the p-value.
+
+```{r}
+textInput("t", 
+          "What was the observed test statistic?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+```
+
+
+```{r}
+
+radioButtons("sided", 
+             "What type of alternative hypothesis are we testing?",
+                   choices = c("one sided (less than)" = "'less'",
+                               "one sided (greater than)" = "'greater'",
+                               "two sided (not equal to)" = "'two_sided'")
+              )
+```
+
+
+```{r, context="server"}
+
+
+output$code_5 <- renderText(
+        makePrintText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni) %>% \n hypothesize(null = 'independence') %>% \n calculate(stat = '%ni', order = c('%ni', '%ni')) %>% visualize(method = '%oi') +
+  shade_p_value(obs_stat = %ni, direction = %ni)",
+          old_input = c("theoretical"),
+          new_input = c(input$var_e, input$var_r, "t", input$val_1, input$val_2, input$t, input$sided)
+        )
+  )
+
+output$result_5 <- renderPlot(
+  eval(parse(text = 
+        makeEvalText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni) %>% \n hypothesize(null = 'independence') %>% \n calculate(stat = '%ni', order = c('%ni', '%ni')) %>% \n visualize(method = '%oi') + \n
+  shade_p_value(obs_stat = %ni, direction = %ni)",
+          old_input = c("theoretical"),
+          new_input = c(input$var_e, input$var_r, "t", input$val_1, input$val_2, input$t, input$sided)
+        )
+  ))
+  )
+
+output$code_6 <- renderText(
+        makePrintText(
+          base_string = "pt(%ni, df = %oi)",
+          old_input = c("341"),
+          new_input = c(input$t)
+        )
+  )
+
+output$result_6 <- renderText(
+  eval(parse(text = 
+        makeEvalText(
+                    base_string = "pt(%ni, df = %oi)",
+          old_input = c("341"),
+          new_input = c(input$t)
+        )
+  ))
+  )
+
+```
+
+
+Code:
+
+```{r}
+htmlOutput("code_5")
+```
+
+Output:
+
+```{r}
+plotOutput("result_5")
+
+```
+
+Code:
+
+```{r}
+htmlOutput("code_6")
+```
+
+Output:
+
+```{r}
+textOutput("result_6")
+
+```
+
+
+What do you conclude from this p-value?

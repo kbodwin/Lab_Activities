@@ -1,0 +1,19 @@
+.navbar-inverse {
+  background-color: #a2a2d0;
+  border-color: #a2a2d0;
+}
+
+.navbar-inverse .navbar-nav>.active>a, .navbar-inverse .navbar-nav>.active>a:hover, .navbar-inverse .navbar-nav>.active>a:focus {
+    color: #ffffff;
+    background-color: #3a4454;
+}
+
+body {
+  background: #fff8e7;
+  padding: 60px 0 0 8px; /* padding-top overridden by theme */
+}
+
+body hr {
+  border-color: #fff8e7;
+  margin: 10px 0;
+}

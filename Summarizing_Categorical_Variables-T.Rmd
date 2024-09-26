@@ -1,0 +1,399 @@
+---
+title: "Visualizing Categorical Variables"
+output: learnr::tutorial
+tutorial:
+  id: "Lab_catvars"
+  version: 2.0
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+
+if(file.exists("Summarizing_Categorical_Variables-T.html")){
+  file.remove("Summarizing_Categorical_Variables-T.html")
+}
+
+
+require(learnr)
+require(ggplot2)
+require(dplyr)
+require(shiny)
+require(tidyr)
+require(httpuv)
+
+knitr::opts_chunk$set(echo = FALSE)
+
+
+source("https://raw.githubusercontent.com/kbodwin/ShinyLabs/master/Scripts/makeStrings.R")
+
+correct <- "<font color='red'>Correct!</font><br><br>"
+incorrect <- "<font color='red'>Not quite right...</font><br><br>"
+congrats <- "<font color='red'>You did it!</font><br><br>"
+
+titanic = read.csv('https://raw.githubusercontent.com/kbodwin/ShinyLabs/master/Datasets/titanic.csv')
+
+titanic <- titanic %>% mutate(
+  Survived = factor(Survived)
+)
+
+titanic <- titanic %>% mutate(
+   Family.Aboard = Siblings.Spouses.Aboard + Parents.Children.Aboard,
+   Passenger.Class = factor(Pclass, 
+                           levels = c(1,2,3), 
+                           labels = c("First", "Second", "Third"))
+)
+
+### %ni = new input (red), %oi = old input (blue)
+```
+
+## Introduction
+
+In this exercise, we will begin visualizing the information from the `titanic` data.  We will start by exploring the **categorical** variables in the dataset.
+
+First, let's make the necessary adjustments to the categorical variables, so that **R** recognizes them as categorical (or "factors").
+
+```{r, echo = TRUE}
+titanic <- titanic %>% mutate(
+  Survived = factor(Survived,
+                    levels = c(0,1),
+                    labels = c("Died", "Lived")),
+  Passenger.Class = factor(Pclass, 
+                           levels = c(1,2,3), 
+                           labels = c("First", "Second", "Third"))
+)
+```
+
+## Intro to ggplot
+
+We will be using a package called `ggplot2` to make all of our visualizations.  This package has a very specific format (or "grammar of graphics") for creating plots:  
+
+### Mapping
+
+We first must specify the **mapping** or **aesthetic**.  This is where we "map" certain variables to the place on the chart where they will be visualized.
+
+### Geometry
+
+We then must specify the **geometry**, or the type of plot we would like to make.  We can also add various options to make the plot prettier.
+
+
+Read on to try this out:
+
+
+## Bar Plots
+
+```{r, echo=FALSE}
+textInput("plot_var_1", 
+          "What variable would you like to plot?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_dat_1", 
+          "What dataset is that variable found in?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+# radioButtons("plot_type_1",
+#              "Would you like a barplot or a dotplot?",
+#              choices = c("barplot" = "bar",
+#                          "dotplot" = "dotplot"))
+
+
+htmlOutput("code_4_1")
+
+plotOutput("plot_4_1")
+```
+
+
+```{r, context="server"}
+bs_4_1 = reactive("ggplot(%ni, aes(x = %ni)) + geom_bar()")
+
+output$plot_4_1 <- renderPlot({
+ eval(parse(text = 
+    makeEvalText(
+      base_string = bs_4_1(), 
+      new_input = c(input$plot_dat_1, input$plot_var_1)
+    )
+   ))
+})
+
+output$code_4_1 <- renderText(
+        makePrintText( 
+          base_string = bs_4_1(), 
+          new_input = c(input$plot_dat_1, input$plot_var_1)
+        )
+  )
+
+```
+
+Beyond the crucial information of the dataset and the variable(s) to plot, there are also plenty of optional settings to make our image nicer.
+
+```{r, echo=FALSE}
+textInput("plot_title_1", 
+          "Title of the plot:", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_xlab_1", 
+          "Label for x-axis:", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+radioButtons("fill_1", 
+             "Should the bars be different colors?",
+                   choices = c("No" = "",
+                               "Yes" = ", fill = %oi")
+              )
+
+
+```
+
+```{r, context = "server"}
+bs_4_2 <- reactive("ggplot(%oi, aes(x = %oi%ni)) + geom_bar() + ggtitle('%ni') + xlab('%ni')")
+
+output$plot_4_2 <- renderPlot({
+ eval(parse(text = 
+    makeEvalText(
+      base_string = bs_4_2(), 
+      old_input = c("titanic", input$plot_var_1, input$plot_var_1),
+      new_input = c(input$fill_1, input$plot_title_1, input$plot_xlab_1)
+    )
+   ))
+})
+
+output$code_4_2 <- renderText(
+        makePrintText( 
+          base_string = bs_4_2(), 
+          old_input = c(input$plot_dat_1, input$plot_var_1, input$plot_var_1),
+          new_input = c(input$fill_1, input$plot_title_1, input$plot_xlab_1)
+    )
+  )
+
+
+```
+
+```{r, echo = FALSE}
+htmlOutput("code_4_2")
+
+plotOutput("plot_4_2")
+```
+
+## Multiple bar plots
+
+Now suppose we wish to compare two categorical variables.  One option is to simply make separate barplots for each category.  We do so by adding the option `facet_grid()` to our plot.  Try it below.
+
+```{r, echo=FALSE}
+
+textInput("plot_var_2_1", 
+          "What variable would you like use for the bars?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_var_2", 
+          "What variable would you like to use to separate the plots?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_title_2", 
+          "Title of the plot:", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_xlab_2", 
+          "Label for x-axis:", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+radioButtons("fill_2", 
+             "Should the bars be different colors?",
+                   choices = c("No" = "",
+                               "Yes" = ", fill = %oi")
+              )
+
+
+
+
+
+```
+
+```{r, context = "server"}
+bs_4_3 <- reactive("ggplot(%oi, aes(x = %ni%ni)) + geom_bar() + facet_grid(~%ni) + ggtitle('%ni') + xlab('%ni')")
+
+output$plot_4_3 <- renderPlot({
+ eval(parse(text = 
+    makeEvalText(
+      base_string = bs_4_3(), 
+      old_input = c("titanic", input$plot_var_2_1),
+      new_input = c(input$plot_var_2_1, input$fill_2, input$plot_var_2, input$plot_title_2, input$plot_xlab_2)
+    )
+   ))
+})
+
+output$code_4_3 <- renderText(
+        makePrintText( 
+      base_string = bs_4_3(), 
+      old_input = c("titanic", input$plot_var_2_1),
+      new_input = c(input$plot_var_2_1, input$fill_2, input$plot_var_2, input$plot_title_2, input$plot_xlab_2)
+    )
+  )
+
+
+```
+
+```{r, echo = FALSE}
+htmlOutput("code_4_3")
+
+plotOutput("plot_4_3")
+```
+
+## Side-by-side bar plots
+
+Another option is to plot bars side-by-side, separating groups by the value of the second categorical variable.
+```{r, echo=FALSE}
+
+textInput("plot_var_3_1", 
+          "What variable would you like use for the bar heights?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_var_3_2", 
+          "What variable would you like to use to separate the bars?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_title_3", 
+          "Title of the plot:", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_xlab_3", 
+          "Label for x-axis:", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+
+
+
+
+```
+
+```{r, context = "server"}
+
+bs_4_4 <- reactive("ggplot(%oi, aes(x = %ni, fill = %ni)) + geom_bar(%ni) + ggtitle('%ni') + xlab('%ni')")
+
+output$plot_4_4 <- renderPlot({
+ eval(parse(text = 
+    makeEvalText(
+      base_string = bs_4_4(), 
+      old_input = c("titanic"),
+      new_input = c(input$plot_var_3_1, input$plot_var_3_2, "position = 'dodge'", input$plot_title_3, input$plot_xlab_3)
+    )
+   ))
+})
+
+output$code_4_4 <- renderText(
+        makePrintText( 
+          base_string = bs_4_4(), 
+      old_input = c("titanic"),
+      new_input = c(input$plot_var_3_1, input$plot_var_3_2, "position = 'dodge'", input$plot_title_3, input$plot_xlab_3)
+    )
+  )
+
+
+```
+
+```{r, echo = FALSE}
+htmlOutput("code_4_4")
+
+plotOutput("plot_4_4")
+```
+
+## Stacked Bar Charts
+
+The last, and typically best option is to make a **stacked bar chart**, which combines the two categorical variables on the bars themselves.  Note that these charts continue to obey the *area principle* - the area of the colored sections corresponds to the number of people in that category!
+
+Another advantage of the stacked bar chart is that it is a great alternative to a pie chart for looking at percentages.  Try plotting the bar heights as percentages rather than counts.  Think about what research questions might be better addressed by this approach.
+
+```{r, echo=FALSE}
+
+textInput("plot_var_4_1", 
+          "What variable would you like use for the bar heights?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_var_4_2", 
+          "What variable would you to color the bar stacks?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_title_4", 
+          "Title of the plot:", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_xlab_4", 
+          "Label for x-axis:", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+radioButtons("plot_pct",
+             "The height of the bars should be:",
+             choices = c(
+               "Counts" = "",
+               "Percentages" = "position = 'fill'"
+             ))
+
+
+
+
+
+
+```
+
+```{r, context = "server"}
+bs_4_5 <- reactive("ggplot(%oi, aes(x = %ni, fill = %ni)) + geom_bar(%ni) + ggtitle('%ni') + xlab('%ni')")
+
+output$plot_4_5 <- renderPlot({
+ eval(parse(text = 
+    makeEvalText(
+      base_string = bs_4_5(), 
+      old_input = c("titanic"),
+      new_input = c(input$plot_var_4_1, input$plot_var_4_2, input$plot_pct, input$plot_title_4, input$plot_xlab_4)
+    )
+   ))
+})
+
+output$code_4_5 <- renderText(
+        makePrintText( 
+          base_string = bs_4_5(), 
+      old_input = c("titanic"),
+      new_input = c(input$plot_var_4_1, input$plot_var_4_2, input$plot_pct, input$plot_title_4, input$plot_xlab_4)
+    )
+  )
+
+
+```
+
+```{r, echo = FALSE}
+htmlOutput("code_4_5")
+
+plotOutput("plot_4_5")
+```
+
+
+Play around with these various plots, until you find an insight that you think is interesting!

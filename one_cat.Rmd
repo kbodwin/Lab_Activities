@@ -1,0 +1,95 @@
+---
+title: "One Categorical Variable"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: yeti
+runtime: shiny
+---
+
+<script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(shiny)
+library(glue)
+library(tidyverse)
+library(demoR)
+library(codeModules)
+
+titanic <- read.csv('https://raw.githubusercontent.com/kbodwin/ShinyLabs/master/Datasets/titanic.csv')
+```
+
+
+
+# Discuss and Summarize
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Input
+
+
+
+```{r}
+textInput('var_name', 
+          "Consider the variable that contains the gender of each passenger.  What is the name of this variable?")
+```
+
+
+
+```{r}
+radioButtons("fun_type", 
+             "What would you like to do with this variable?",
+               c("Find the mean" = "mean",
+                 "Find the median" = "median",
+                 "Find the counts" = "count",
+                 "Find the frequencies" = "freq"),
+             selected = "mean")
+```
+
+```{r}
+
+p1 <- reactive({
+teach_me('
+titanic %>%
+  summarize({fun_type}({var_name}))
+',
+input)
+})
+
+#output$see_inputs <- renderText(input$fun_type)
+
+output$p1_html <- renderCode(HTML(p1()$html_code))
+
+output$p1_output <- renderText(eval(p1()$raw_code))
+```
+
+```{r}
+#textOutput('see_inputs')
+```
+
+
+```{r}
+codeOutput('p1_html')
+```
+
+```{r}
+actionButton("button", "Run this code")
+```
+
+
+
+Column {data-width=500, data-height=100}
+-----------------------------------------------------------------------
+
+### Code Run
+
+### Output
+
+```{r}
+observeEvent(input$button,
+  verbatimTextOutput('p1_output')
+)
+```

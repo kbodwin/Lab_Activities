@@ -1,0 +1,307 @@
+---
+title: "Visualizing Quantitative Variables"
+output: learnr::tutorial
+tutorial:
+  id: "Lab_QuantVar"
+  version: 1.0
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+
+if(file.exists("Visualizing_Quantitative_Variables-T.html")){
+  file.remove("Visualizing_Quantitative_Variables-T.html")
+}
+
+require(learnr)
+require(ggplot2)
+require(dplyr)
+require(shiny)
+require(tidyr)
+require(httpuv)
+
+knitr::opts_chunk$set(echo = FALSE)
+
+tags$style(type="text/css",
+         ".shiny-output-error { visibility: hidden; }",
+         ".shiny-output-error:before { visibility: hidden; }"
+)
+
+
+source("https://raw.githubusercontent.com/kbodwin/ShinyLabs/master/Scripts/makeStrings.R")
+
+correct <- "<font color='red'>Correct!</font><br><br>"
+incorrect <- "<font color='red'>Not quite right...</font><br><br>"
+congrats <- "<font color='red'>You did it!</font><br><br>"
+
+titanic = read.csv('https://raw.githubusercontent.com/kbodwin/ShinyLabs/master/Datasets/titanic.csv')
+
+titanic <- titanic %>% mutate(
+  Survived = factor(Survived,
+                    levels = c(0,1),
+                    labels = c("Died", "Lived")),
+  Passenger.Class = factor(Pclass, 
+                           levels = c(1,2,3), 
+                           labels = c("First", "Second", "Third"))
+)
+
+### %ni = new input (red), %oi = old input (blue)
+```
+
+
+## Introduction
+
+In this exercise, we will continue to explore the `titanic` dataset, which has already been loaded for you.  This time, we will think about **quantitative** variables - how to display them and how to answer research questions with plots.
+
+First, we will make the necessary adjustments to the categorical variables:
+
+```{r, echo = TRUE, eval = FALSE}
+titanic <- titanic %>% mutate(
+  Survived = factor(Survived,
+                    levels = c(0,1),
+                    labels = c("Died", "Lived")),
+  Passenger.Class = factor(Pclass, 
+                           levels = c(1,2,3), 
+                           labels = c("First", "Second", "Third"))
+)
+```
+
+Then, remind yourself what the dataset looks like:
+
+```{r, echo = TRUE}
+titanic %>% head()
+```
+
+
+## Histograms
+
+To make other plots beyond the **barplots** that you already learned, you will use almost the same code.  We still use `ggplot()` in the same way, as well as options like `ggtitle()` and `xlab`.  The only difference is that instead of `geom_bar()`, we want to make a **histogram**, or `geom_histogram()`.  Try it below.  Pay careful attention to the new options that come with `geom_histogram()`
+
+(Hint: Go to [This Page](http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf) to see lots of fun color options!)
+
+```{r, echo=FALSE}
+textInput("plot_2_var", 
+          "What QUANTITATIVE variable would you like to make a histogram of?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+sliderInput("plot_2_bins", 
+          "How many bins should the histogram have?",
+          value = 20,
+          min = 1, 
+          max = 100)
+
+textInput("plot_2_color", 
+          "What color should the histogram be?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_2_title", 
+          "What title will you give your plot?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_2_xlab", 
+          "What label should the x-axis have?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+
+
+
+# 
+htmlOutput("code_2")
+# 
+plotOutput("plot_2")
+```
+
+
+```{r, context="server"}
+bs_2 <- reactive("ggplot(%oi, aes(x = %ni)) + geom_%oi(bins = %ni, %ni) + ggtitle('%ni') + xlab('%ni')")
+
+output$plot_2 <- renderPlot({
+ eval(parse(text = 
+    makeEvalText(
+      base_string = bs_2(), 
+      old_input = c("titanic", "histogram"),
+      new_input = c(input$plot_2_var, input$plot_2_bins, paste0(", fill = '", input$plot_2_color, "'"), input$plot_2_title, input$plot_2_xlab)
+    )
+   ))
+})
+
+output$code_2 <- renderText(
+        makePrintText( 
+      base_string = bs_2(), 
+      old_input = c("titanic", "histogram"),
+      new_input = c(input$plot_2_var, input$plot_2_bins, paste0(", fill = '", input$plot_2_color, "'"), input$plot_2_title, input$plot_2_xlab)
+    )
+  )
+
+```
+
+### Densities
+
+A histogram is our best guess about the shape of a **density**.  We can also choose to plot a smooth line over the histogram, to help us visualize what the density might be like.
+
+```{r}
+
+radioButtons("count_density",
+             "The height of the bars should be:",
+             choices = c("counts" = "", 
+                         "densities" = "aes(y = ..density..), ")
+)
+
+radioButtons("add_density",
+             "The plot should show an estimated density curve.",
+             choices = c(
+                "no" = "",
+               "yes" = "+ geom_density(size = 2)"
+             )
+)
+               
+
+
+
+# 
+htmlOutput("code_3")
+# 
+plotOutput("plot_3")
+```
+
+```{r, context="server"}
+
+bs_3 <- reactive("ggplot(%oi, aes(x = %oi)) + geom_%oi(%nibins = %oi%oi) %ni+ ggtitle('%oi') + xlab('%oi')")
+
+output$plot_3 <- renderPlot({
+ eval(parse(text = 
+    makeEvalText(
+      base_string = bs_3(), 
+      old_input = c("titanic", input$plot_2_var, "histogram", input$plot_2_bins, paste0(", fill = '", input$plot_2_color, "'"), input$plot_2_title, input$plot_2_xlab),
+      new_input = c(input$count_density, input$add_density)
+    )
+   ))
+})
+
+output$code_3 <- renderText(
+        makePrintText( 
+      base_string = bs_3(), 
+      old_input = c("titanic", input$plot_2_var, "histogram", input$plot_2_bins, paste0(", fill = '", input$plot_2_color, "'"), input$plot_2_title, input$plot_2_xlab),
+      new_input = c(input$count_density, input$add_density)
+    )
+  )
+
+```
+
+### Reading the histogram
+
+Use the exercise above to with the variable `Age`. Think about the following questions:
+
+* What number of bins one seems to give the most reasonable density estimate, in your opinion?
+
+* How many modes does this distribution have?
+
+* Is this distribution skewed?
+
+* What are the **mean** and **median** age of Titanic passengers?
+
+
+## Multiple Histograms
+
+As we did with barplots, we will use the option `facet_grid` to make multiple separate *histograms* across values a particular categorical variable.
+
+
+```{r, echo=FALSE}
+textInput("plot_4_var_quant", 
+          "What QUANTITATIVE variable would you like to plot on a histogram?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_4_var_cat", 
+          "What CATEGORICAL variable would you like to use to separate the histograms?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+
+# 
+htmlOutput("code_4")
+# 
+plotOutput("plot_4")
+```
+
+
+```{r, context="server"}
+bs_4 <- reactive("ggplot(%oi) + geom_histogram(aes(x = %ni)) + %oi(~%ni)")
+
+output$plot_4 <- renderPlot({
+ eval(parse(text = 
+    makeEvalText(
+      base_string = bs_4(), 
+      old_input = c("titanic", "facet_grid"),
+      new_input = c(input$plot_4_var_quant, input$plot_4_var_cat)
+    )
+   ))
+})
+
+output$code_4 <- renderText(
+        makePrintText( 
+      base_string = bs_4(), 
+      old_input = c("titanic", "facet_grid"),
+      new_input = c(input$plot_4_var_quant, input$plot_4_var_cat)
+    )
+  )
+
+```
+
+## Side-by-Side Boxplots
+
+A better way to compare a quantitative and a categorical variable is usually to make **side-by-side boxplots**.
+
+
+```{r, echo=FALSE}
+textInput("plot_5_var_quant", 
+          "What QUANTITATIVE variable would you like to plot?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("plot_5_var_cat", 
+          "What CATEGORICAL variable would you like to compare?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+# 
+htmlOutput("code_5")
+# 
+plotOutput("plot_5")
+```
+
+
+```{r, context="server"}
+bs_5 <- reactive("ggplot(%oi) + geom_%oi(aes(x = %ni, y = %ni, fill = %ni))")
+
+output$plot_5 <- renderPlot({
+ eval(parse(text = 
+    makeEvalText(
+      base_string = bs_5(), 
+      old_input = c("titanic", "boxplot"),
+      new_input = c(input$plot_5_var_cat, input$plot_5_var_quant, input$plot_5_var_cat)
+    )
+   ))
+})
+
+output$code_5 <- renderText(
+        makePrintText( 
+      base_string = bs_5(), 
+      old_input = c("titanic", "boxplot"),
+      new_input = c(input$plot_5_var_cat, input$plot_5_var_quant, input$plot_5_var_cat)
+    )
+  )
+
+```

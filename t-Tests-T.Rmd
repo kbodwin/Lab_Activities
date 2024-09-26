@@ -1,0 +1,446 @@
+---
+title: "t-tests"
+output: learnr::tutorial
+tutorial:
+  id: "Lab_permtests"
+  version: 2.0
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+
+if(file.exists("Permutation_Test-T.html")){
+  file.remove("Permutation_Test-T.html")
+}
+
+require(learnr)
+require(ggplot2)
+require(dplyr)
+require(shiny)
+require(tidyr)
+require(httpuv)
+
+knitr::opts_chunk$set(echo = FALSE)
+
+
+source("https://raw.githubusercontent.com/kbodwin/ShinyLabs/master/Scripts/makeStrings.R")
+
+correct <- "<font color='red'>Correct!</font><br><br>"
+incorrect <- "<font color='red'>Not quite right...</font><br><br>"
+congrats <- "<font color='red'>You did it!</font><br><br>"
+
+titanic = read.csv('https://raw.githubusercontent.com/kbodwin/ShinyLabs/master/Datasets/titanic.csv')
+
+titanic <- titanic %>% mutate(
+  Survived = factor(Survived)
+)
+
+titanic_full <- titanic %>% mutate(
+   Family.Aboard = Siblings.Spouses.Aboard + Parents.Children.Aboard,
+   Passenger.Class = factor(Pclass, 
+                           levels = c(1,2,3), 
+                           labels = c("First", "Second", "Third"))
+)
+
+### %ni = new input (red), %oi = old input (blue)
+```
+
+
+## Setup
+
+### Checking out the data
+
+As a reminder, here is some information about the `titanic` dataset:
+
+```{r}
+titanic %>% head()
+titanic %>% summary()
+```
+
+### The `infer` package
+
+For this lab, we will be using the `infer` package. 
+
+```{r}
+library(infer)
+```
+
+This package allows us to carry out one-by-one the steps of a hypothesis test.
+
+### permutation and p-values
+
+The final step of a hypothesis test is to check statistical significance.  To do so, we ask ourselves,
+
+> If the null hypothesis were true, how likely would we be to find evidence as strong as this data, simply by luck?
+
+For example, if I were to flip a coin once and it landed heads, I might claim "Ah-ha!  This coin is unfair; it is more likely to land heads than tails."  You would reply, "If it's a fair coin, there was a 50% chance of heads.  The data we saw (one heads in one flip) is very likely to occur even if the coin is fair!"  In other words, you have a *p-value* of 50% - not very compelling!
+
+On the other hand, if I flipped the coin 100 times and saw 60 heads, you might note that I need to get *really* lucky to see this result from a fair coin.  In fact, it turns out that the chances of getting 60 or more heads in 100 flips of a fair coin is only 1.76%.  This *p-value* of 0.0176 is very small, so the data we saw (60 heads in 100 flips) is really inconsistent with the hypothesis of a fair coin.  We might then be convinced the coin is unfair.
+
+In this lab, we will calculate p-values via *permutation*.  Read [this chapter](https://moderndive.com/9-hypothesis-testing.html) for more information, then try it out in this app.
+
+## Specifying variables
+
+The first step of a hypothesis test is to determine the variable(s) you wish to study.
+
+Consider the question, *Did gender relate to survival on the Titanic?*
+
+```{r}
+textInput("var_e", 
+          "What is the explanatory variable?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("var_r", 
+          "What is the response variable?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+
+textInput("var_succ", 
+          "What value of the response variable represents a 'success'?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+```
+
+
+```{r, context="server"}
+
+output$code_1 <- renderText(
+        makePrintText(
+          base_string = "titanic %>% \n %oi(explanatory = %ni, response = %ni, success = '%ni')",
+          old_input = c("specify"),
+          new_input = c(input$var_e, input$var_r, input$var_succ)
+        )
+  )
+
+output$result_1 <- renderDataTable(
+  eval(parse(text = 
+        makeEvalText(
+          base_string = "titanic %>% \n %oi(explanatory = %ni, response = %ni, success = '%ni')",
+          old_input = c("specify"),
+          new_input = c(input$var_e, input$var_r, input$var_succ)
+        )
+  ))
+  )
+
+
+```
+
+
+Code:
+
+```{r}
+htmlOutput("code_1")
+```
+
+Output:
+
+```{r}
+dataTableOutput("result_1")
+
+```
+
+Note that we have prepared our dataset with some information, but changed nothing substantial yet!
+
+
+## Hypothesize
+
+The next step is to establish our hypothses.  In this case, the null hypothesis is "independence" - that is, that there is **no** relationship between the explanatory and response variables.
+
+
+```{r, context="server"}
+
+output$code_2 <- renderText(
+        makePrintText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni, success = '%ni') %>% \n %oi(null = %ni)",
+          old_input = c("hypothesize"),
+          new_input = c(input$var_e, input$var_r, input$var_succ, "independence")
+        )
+  )
+
+output$result_2 <- renderDataTable(
+  eval(parse(text = 
+        makeEvalText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni, success = '%ni') %>% \n hypothesize(null = 'independence')",
+          old_input = c("hypothesize"),
+          new_input = c(input$var_e, input$var_r, input$var_succ)
+        )
+  ))
+  )
+
+
+```
+
+
+Code:
+
+```{r}
+htmlOutput("code_2")
+```
+
+Output:
+
+```{r}
+dataTableOutput("result_2")
+
+```
+
+Note that we still not changed the dataset at all!
+
+## Generating permutations
+
+Now we will generate our permutations.  Our goal is to "reshuffle" the explanatory variable many times.
+
+```{r}
+sliderInput("reps", 
+          "How many reshufflings should we calculate?", 
+          min = 10,
+          max = 1000,
+          value = 50)
+```
+
+
+```{r, context="server"}
+
+output$code_3 <- renderText(
+        makePrintText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni, success = '%ni') %>% \n hypothesize(null = 'independence') %>% \n %oi(reps = %ni)",
+          old_input = c("generate"),
+          new_input = c(input$var_e, input$var_r, input$var_succ, input$reps)
+        )
+  )
+
+output$result_3 <- renderDataTable(
+  eval(parse(text = 
+        makeEvalText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni, success = '%ni') %>% \n hypothesize(null = 'independence') %>% generate(reps = %ni)",
+          old_input = c(),
+          new_input = c(input$var_e, input$var_r, input$var_succ, input$reps)
+        )
+  ))
+  )
+
+
+```
+
+
+Code:
+
+```{r}
+htmlOutput("code_3")
+```
+
+Output:
+
+```{r}
+dataTableOutput("result_3")
+
+```
+
+Now we have something new!  
+
+## Calculating the test statistic
+
+For each of our permutations ("reshufflings"), we would like to calculate a test statistic.  Our goal is to see what tends to happen to this test statistic by *random chance*, and then use this to decide how unusual our actual *observed* test statistic was.
+
+
+```{r}
+radioButtons("test_stat", 
+             "What would be a reasonable choice of test statistic for this study?",
+                   choices = c("a sample mean" = "'mean'",
+                               "a difference of sample means" = "'diff in means', order = c('female', 'male')",
+                               "a proportion" = "'prop'", 
+                               "a difference of proportions" = "'diff in props', order = c('female', 'male')")
+              )
+
+```
+
+
+```{r, context="server"}
+
+output$code_4 <- renderText(
+        makePrintText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni, success = '%ni') %>% \n hypothesize(null = 'independence') %>% \n generate(reps = %ni) %>% \n %oi(stat = %ni)",
+          old_input = c("calculate"),
+          new_input = c(input$var_e, input$var_r, input$var_succ, input$reps, input$test_stat)
+        )
+  )
+
+output$result_4 <- renderDataTable(
+  eval(parse(text = 
+        makeEvalText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni, success = '%ni') %>% \n hypothesize(null = 'independence') %>% generate(reps = %ni) %>% \n calculate(stat = %ni)",
+          old_input = c(),
+          new_input = c(input$var_e, input$var_r, input$var_succ, input$reps, input$test_stat)
+        )
+  ))
+  )
+
+
+```
+
+
+Code:
+
+```{r}
+htmlOutput("code_4")
+```
+
+Output:
+
+```{r}
+dataTableOutput("result_4")
+
+```
+
+Now, for each of our reshufflings, we have calculated a test statistic.  But what about the actual *observed* test statistic?  Use one of the other practice apps to find the test statistic from the data.  Does it seem to be extreme, compared to these reshufflings?
+
+
+## Plotting the distribution
+
+We would now like to establish the **distribution** of the test statistic *under the null*.  That is, when we reshuffled the explanatory variable to make it totally random, what type of values of the test statistic were typical? Where did our *observed* test statistic fall on this distribution?
+
+```{r}
+textInput("obs_stat", 
+          "What was the observed test statistic?", 
+          value = "", 
+          width = '80%', 
+          placeholder = NULL)
+```
+
+
+
+```{r, context="server"}
+
+output$code_5 <- renderText(
+        makePrintText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni, success = '%ni') %>% \n hypothesize(null = 'independence') %>% \n generate(reps = %ni) %>% \n calculate(stat = %ni) %>% \n %oi(obs_stat = %ni)",
+          old_input = c("visualize"),
+          new_input = c(input$var_e, input$var_r, input$var_succ, input$reps, input$test_stat, input$obs_stat)
+        )
+  )
+
+output$result_5 <- renderPlot(
+  eval(parse(text = 
+        makeEvalText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni, success = '%ni') %>% \n hypothesize(null = 'independence') %>% generate(reps = %ni) %>% \n calculate(stat = %ni) %>% \n visualize(obs_stat = %ni)",
+          old_input = c(),
+          new_input = c(input$var_e, input$var_r, input$var_succ, input$reps, input$test_stat, input$obs_stat)
+        )
+  ))
+  )
+
+
+```
+
+
+Code:
+
+```{r}
+htmlOutput("code_5")
+```
+
+Output:
+
+```{r}
+plotOutput("result_5")
+
+```
+
+## The p-value
+
+Last but not least, lets calculate the p-value!  That is, out of all of our reshufflings, what percent of them were *more extreme* than the observed data?
+
+```{r}
+
+radioButtons("sided", 
+             "What type of alternative hypothesis are we testing?",
+                   choices = c("one sided (less than)" = "'less'",
+                               "one sided (greater than)" = "'greater'",
+                               "two sided (not equal to)" = "'two_sided'")
+              )
+```
+
+### First, let's visualize this:
+
+```{r, context="server"}
+
+output$code_6 <- renderText(
+        makePrintText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni, success = '%ni') %>% \n hypothesize(null = 'independence') %>% \n generate(reps = %ni) %>% \n calculate(stat = %ni) %>% \n visualize() + %oi(obs_stat = %ni, direction = %ni)",
+          old_input = c("shade_p_value"),
+          new_input = c(input$var_e, input$var_r, input$var_succ, input$reps, input$test_stat, input$obs_stat, input$sided)
+        )
+  )
+
+output$result_6 <- renderPlot(
+  eval(parse(text = 
+        makeEvalText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni, success = '%ni') %>% \n hypothesize(null = 'independence') %>% generate(reps = %ni) %>% \n calculate(stat = %ni) %>% \n visualize() + shade_p_value(obs_stat = %ni, direction = %ni)",
+          old_input = c(),
+          new_input = c(input$var_e, input$var_r, input$var_succ, input$reps, input$test_stat, input$obs_stat, input$sided)
+        )
+  ))
+  )
+
+
+```
+
+
+Code:
+
+```{r}
+htmlOutput("code_6")
+```
+
+Output:
+
+```{r}
+plotOutput("result_6")
+
+```
+
+### Then let's calculate the actual p-value
+
+```{r, context="server"}
+
+output$code_7 <- renderText(
+        makePrintText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni, success = '%ni') %>% \n hypothesize(null = 'independence') %>% \n generate(reps = %ni) %>% \n calculate(stat = %ni) %>% \n %oi(obs_stat = %ni, direction = %ni)",
+          old_input = c("get_p_value"),
+          new_input = c(input$var_e, input$var_r, input$var_succ, input$reps, input$test_stat, input$obs_stat, input$sided)
+        )
+  )
+
+output$result_7 <- renderTable(
+  eval(parse(text = 
+        makeEvalText(
+          base_string = "titanic %>% \n specify(explanatory = %ni, response = %ni, success = '%ni') %>% \n hypothesize(null = 'independence') %>% generate(reps = %ni) %>% \n calculate(stat = %ni) %>% \n get_p_value(obs_stat = %ni, direction = %ni)",
+          old_input = c(),
+          new_input = c(input$var_e, input$var_r, input$var_succ, input$reps, input$test_stat, input$obs_stat, input$sided)
+        )
+  ))
+  )
+
+
+```
+
+
+Code:
+
+```{r}
+htmlOutput("code_7")
+```
+
+Output:
+
+```{r}
+tableOutput("result_7")
+
+```
+
+
+What do you conclude from this p-value?
